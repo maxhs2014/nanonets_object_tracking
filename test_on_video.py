@@ -14,6 +14,9 @@ import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
 import cv2,pickle,sys
+import requests
+import base64
+import io
 
 from deepsort import *
 
@@ -72,6 +75,17 @@ def get_mask(filename):
 	mask = mask / 255.0
 	return mask
 
+def mk_dict(predictions):
+	gt_dict = []
+
+	for pred in predictions:
+		coords = [pred["x"], pred["y"], pred["width"], pred["height"]]
+		confidence = pred["confidence"]
+		gt_dict.append({'coords':coords,'conf':confidence})
+
+	return gt_dict
+
+
 
 if __name__ == '__main__':
 	
@@ -107,7 +121,29 @@ if __name__ == '__main__':
 		frame = frame * mask
 		frame = frame.astype(np.uint8)
 
-		detections,out_scores = get_gt(frame,frame_id,gt_dict)
+		# need to replace with roboflow api
+		retval, image = cap.read()
+		retval, buffer = cv2.imencode('.jpg', image)
+		img_str = base64.b64encode(buffer)
+		img_str = img_str.decode("ascii")
+
+		# Construct the URL
+		upload_url = "".join([
+				"https://detect.roboflow.com/your-model/42",
+				"?api_key=YOUR_KEY",
+				"&name=YOUR_IMAGE.jpg"
+		])
+
+		# POST to the API
+		r = requests.post(upload_url, data=img_str, headers={
+				"Content-Type": "application/x-www-form-urlencoded"
+		})
+
+		predictions = r.json()["predictions"]
+
+		rb_dict = mk_dict(predictions)
+
+		detections,out_scores = get_gt(frame,0,rb_dict)
 
 		if detections is None:
 			print("No dets")

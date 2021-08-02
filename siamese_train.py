@@ -27,8 +27,8 @@ Get training data
 """
 
 class Config():
-	training_dir = "/media/ADAS1/MARS/bbox_train/bbox_train/"
-	testing_dir = "/media/ADAS1/MARS/bbox_test/bbox_test/"
+	training_dir = "/content/nanonets_object_tracking/crops/"
+	testing_dir = "/content/nanonets_object_tracking/crops_test/"
 	train_batch_size = 128
 	train_number_epochs = 100	
 
